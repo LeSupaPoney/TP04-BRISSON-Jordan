@@ -1,0 +1,18 @@
+<p>Catalogue</p>
+<br />
+<label for="recherche">Recherche :</label><input [(ngModel)]="recherche" name="recherche" />
+
+<br />
+<br />
+
+<hr />
+<br />
+
+
+<div *ngFor="let produit of (produits$ | async) || [] | filter: recherche">
+    <div>{{ produit.ref }}</div>
+    <div>{{ produit.designation }}</div>
+    <div>{{ produit.prix }}</div>
+    <div>{{ produit.qte }}</div>
+	<button (click)="addToPanier(produit)">Ajouter au panier</button>
+</div>
