@@ -26,12 +26,19 @@ export class PanierState {
   @Action(AddProduit)
   add({getState, patchState}: StateContext<PanierStateModel>, { payload }: AddProduit) {
     const state = getState();
-    patchState({ items: [...state.items, payload] });
+    const produitIndex = state.items.findIndex(item => item.produit.ref === payload.produit.ref);
+
+    if (produitIndex > -1) {
+      state.items[produitIndex].quantite += payload.quantite;
+      patchState({ items: [...state.items] });
+    } else {
+      patchState({ items: [...state.items, payload] });
+    }
   }
 
-@Action(RemoveProduit)
-remove({getState, patchState}: StateContext<PanierStateModel>, { payload }: RemoveProduit) {
-  const updatedItems = getState().items.filter((_, index) => index !== payload.index);
-  patchState({ items: updatedItems });
-}
+  @Action(RemoveProduit)
+  remove({getState, patchState}: StateContext<PanierStateModel>, { payload }: RemoveProduit) {
+    const updatedItems = getState().items.filter((_, index) => index !== payload.index);
+    patchState({ items: updatedItems });
+  }
 }
