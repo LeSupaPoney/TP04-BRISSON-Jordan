@@ -1,3 +1,4 @@
-<div *ngFor="let item of items$ | async">
-  <button (click)="removeItem(item)">Supprimer</button>
+<div *ngFor="let item of items$ | async; let i = index">
+  <p>{{ item.produit.designation }} - Quantité : {{ item.quantite }}</p>
+  <button (click)="removeItem(i)">Supprimer</button>
 </div>

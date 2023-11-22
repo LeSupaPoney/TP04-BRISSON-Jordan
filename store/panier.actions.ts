@@ -8,5 +8,6 @@ export class AddProduit {
 
 export class RemoveProduit {
   static readonly type = '[Panier] Remove';
-  constructor(public payload: PanierItem) {}
+  constructor(public payload: { index: number }) {}
 }
+

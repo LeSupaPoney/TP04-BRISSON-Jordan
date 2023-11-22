@@ -18,14 +18,20 @@ export class PanierState {
     return state.items.length;
   }
 
+  @Selector()
+  static getItems(state: PanierStateModel) {
+    return state.items;
+  }
+
   @Action(AddProduit)
   add({getState, patchState}: StateContext<PanierStateModel>, { payload }: AddProduit) {
     const state = getState();
     patchState({ items: [...state.items, payload] });
   }
 
-  @Action(RemoveProduit)
-  remove({getState, patchState}: StateContext<PanierStateModel>, { payload }: RemoveProduit) {
-    patchState({ items: getState().items.filter(item => item.produit.ref !== payload.produit.ref) });
-  }
+@Action(RemoveProduit)
+remove({getState, patchState}: StateContext<PanierStateModel>, { payload }: RemoveProduit) {
+  const updatedItems = getState().items.filter((_, index) => index !== payload.index);
+  patchState({ items: updatedItems });
+}
 }
