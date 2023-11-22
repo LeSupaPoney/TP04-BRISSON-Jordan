@@ -1,0 +1,34 @@
+catalogue\produits\produits.component.css:
+#container {
+  display: flex;
+  flex-direction: row;
+}
+#catalogue div {
+  width: 100px;
+}
+
+___
+footer\footer.component.css:
+p {
+  background-color: #333; /* Couleur de fond */
+  color: #fff; /* Couleur du texte */
+  padding: 10px; /* Marge intérieure pour l'espace autour du contenu */
+  text-align: center; /* Centrer le contenu du header */
+}
+
+___
+panier\panier.component.css:
+
+___
+root\root.component.css:
+
+___
+tetiere\tetiere.component.css:
+h1 {
+  background-color: #333; /* Couleur de fond */
+  color: #fff; /* Couleur du texte */
+  padding: 10px; /* Marge intérieure pour l'espace autour du contenu */
+  text-align: center; /* Centrer le contenu du header */
+}
+
+___

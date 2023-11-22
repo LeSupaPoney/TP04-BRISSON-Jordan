@@ -1,0 +1,355 @@
+app.module.ts:
+import { NgModule } from '@angular/core';
+import { NgxsModule } from '@ngxs/store';
+
+import { RootComponent } from './root/root.component';
+import { TetiereComponent } from './tetiere/tetiere.component';
+import { FooterComponent } from './footer/footer.component';
+
+import { BrowserModule } from '@angular/platform-browser';
+import { CatalogueModule } from './catalogue/catalogue.module';
+
+import { PanierState } from './store/panier.state';
+import { PanierComponent } from './panier/panier.component';
+
+@NgModule({
+  imports: [BrowserModule, CatalogueModule, NgxsModule.forRoot([PanierState])],
+  declarations: [RootComponent, TetiereComponent, FooterComponent, PanierComponent],
+  bootstrap: [RootComponent],
+})
+export class AppModule {}
+
+___
+catalogue\catalogue.module.ts:
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ProduitsComponent } from './produits/produits.component';
+import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
+import { FilterPipe } from './filter.pipe';
+
+@NgModule({
+  imports: [CommonModule, HttpClientModule, FormsModule],
+  declarations: [ProduitsComponent, FilterPipe],
+
+  exports: [ProduitsComponent],
+})
+export class CatalogueModule {}
+
+___
+catalogue\catalogue.service.ts:
+import { Injectable } from '@angular/core';
+import { Produit } from './models/produit';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../environments/environment';
+@Injectable()
+export class CatalogueService {
+  constructor(private http: HttpClient) {}
+  public getProduits(): Observable<Produit[]> {
+    return this.http.get<Produit[]>(environment.backendProduit);
+  }
+}
+
+___
+catalogue\filter.pipe.ts:
+import { Pipe, PipeTransform } from '@angular/core';
+import { Produit } from './models/produit';
+@Pipe({
+  name: 'filter',
+})
+export class FilterPipe implements PipeTransform {
+  transform(items: Array<Produit>, searchText: string): Array<Produit> {
+    if (!items) return [];
+    if (!searchText) return items;
+
+    return items.filter((item) =>
+      item.designation.toLowerCase().includes(searchText.toLowerCase())
+    );
+  }
+}
+
+___
+catalogue\models\produit.ts:
+export class Produit {
+  ref: string;
+  designation: string;
+  prix: number;
+  qte: number;
+
+  constructor() {
+    this.ref = '';
+    this.designation = '';
+    this.prix = 0;
+    this.qte = 0;
+  }
+}
+
+___
+catalogue\produits\produits.component.html:
+<p>Catalogue</p>
+<br />
+<label for="recherche">Recherche :</label><input [(ngModel)]="recherche" name="recherche" />
+
+<br />
+<br />
+
+<hr />
+<br />
+
+
+<div *ngFor="let produit of (produits$ | async) || [] | filter: recherche">
+    <div>{{ produit.ref }}</div>
+    <div>{{ produit.designation }}</div>
+    <div>{{ produit.prix }}</div>
+    <div>{{ produit.qte }}</div>
+	<button (click)="addToPanier(produit)">Ajouter au panier</button>
+</div>
+___
+catalogue\produits\produits.component.ts:
+import { Component, OnInit } from '@angular/core';
+import { Observable } from 'rxjs';
+import { CatalogueService } from '../catalogue.service';
+import { Produit } from '../models/produit';
+
+import { Store } from '@ngxs/store';
+import { AddProduit } from '../../store/panier.actions';
+
+@Component({
+  selector: 'app-produits',
+  templateUrl: './produits.component.html',
+  styleUrls: ['./produits.component.css'],
+  providers: [CatalogueService],
+})
+export class ProduitsComponent implements OnInit {
+  recherche: string = '';
+  produits$: Observable<Produit[]>;
+
+  constructor(private catalogueService: CatalogueService, private store: Store) {
+    this.produits$ = this.catalogueService.getProduits();
+  }
+
+  ngOnInit() {}
+  
+  
+  addToPanier(produit: Produit) {
+    const panierItem = { produit, quantite: 1 };
+    this.store.dispatch(new AddProduit(panierItem));
+  }	
+}
+
+___
+environments\environment.ts:
+export const environment = {
+  production: false,
+  backendProduit: '/assets/mock/produits.json',
+};
+
+___
+footer\footer.component.html:
+<p>Architecture WEB FIP - CNAM</p>
+
+___
+footer\footer.component.ts:
+import { Component, OnInit } from '@angular/core';
+
+@Component({
+  selector: 'app-footer',
+  templateUrl: './footer.component.html',
+  styleUrls: ['./footer.component.css']
+})
+export class FooterComponent implements OnInit {
+
+  constructor() { }
+
+  ngOnInit() {
+  }
+
+}
+___
+models\panier-item.ts:
+import { Produit } from '../catalogue/models/produit';
+
+export class PanierItem {
+  produit!: Produit;
+  quantite!: number;
+}
+
+___
+panier\panier.component.html:
+<div *ngFor="let item of items$ | async; let i = index">
+  <p>{{ item.produit.designation }} - Quantité : {{ item.quantite }}</p>
+  <button (click)="removeOneItem(item.produit.ref)">Supprimer une quantité</button>
+  <button (click)="removeAllItems(item.produit.ref)">Supprimer tous</button>
+</div>
+___
+panier\panier.component.spec.ts:
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { PanierComponent } from './panier.component';
+
+describe('PanierComponent', () => {
+  let component: PanierComponent;
+  let fixture: ComponentFixture<PanierComponent>;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      declarations: [PanierComponent]
+    });
+    fixture = TestBed.createComponent(PanierComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+
+___
+panier\panier.component.ts:
+import { Component, OnInit } from '@angular/core';
+import { Select, Store } from '@ngxs/store';
+import { Observable } from 'rxjs';
+import { PanierItem } from '../models/panier-item';
+import { RemoveProduit, RemoveOneProduit, RemoveAllProduit } from '../store/panier.actions';
+import { PanierState } from '../store/panier.state';
+
+@Component({
+  selector: 'app-panier',
+  templateUrl: './panier.component.html',
+  styleUrls: ['./panier.component.css']
+})
+export class PanierComponent implements OnInit {
+  @Select(PanierState.getItems) items$: Observable<PanierItem[]>;
+
+  constructor(private store: Store) {
+    this.items$ = this.store.select(PanierState.getItems);
+  }
+
+  ngOnInit() {}
+
+  removeItem(index: number) {
+    this.store.dispatch(new RemoveProduit({ index }));
+  }
+  
+  removeOneItem(ref: string) {
+    this.store.dispatch(new RemoveOneProduit({ ref }));
+  }
+
+  removeAllItems(ref: string) {
+    this.store.dispatch(new RemoveAllProduit({ ref }));
+  }
+}
+
+___
+root\root.component.html:
+<app-tetiere></app-tetiere>
+<app-produits></app-produits>
+<app-panier></app-panier>
+<app-footer></app-footer>
+
+___
+root\root.component.ts:
+import { Component, OnInit } from '@angular/core';
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './root.component.html',
+  styleUrls: ['./root.component.css'],
+})
+export class RootComponent implements OnInit {
+  constructor() {}
+
+  ngOnInit() {}
+}
+
+___
+store\panier.actions.ts:
+import { PanierItem } from '../models/panier-item';
+
+
+export class AddProduit {
+  static readonly type = '[Panier] Add';
+  constructor(public payload: PanierItem) {}
+}
+
+export class RemoveProduit {
+  static readonly type = '[Panier] Remove';
+  constructor(public payload: { index: number }) {}
+}
+
+export class RemoveOneProduit {
+  static readonly type = '[Panier] Remove One';
+  constructor(public payload: { ref: string }) {}
+}
+
+export class RemoveAllProduit {
+  static readonly type = '[Panier] Remove All';
+  constructor(public payload: { ref: string }) {}
+}
+___
+store\panier.state.ts:
+import { State, Action, StateContext, Selector } from '@ngxs/store';
+import { PanierItem } from '../models/panier-item';
+import { AddProduit, RemoveProduit } from './panier.actions';
+
+export class PanierStateModel {
+  public items: PanierItem[] = [];
+}
+
+@State<PanierStateModel>({
+  name: 'panier',
+  defaults: {
+    items: []
+  }
+})
+export class PanierState {
+  @Selector()
+  static getNbItems(state: PanierStateModel) {
+    return state.items.length;
+  }
+
+  @Selector()
+  static getItems(state: PanierStateModel) {
+    return state.items;
+  }
+
+  @Action(AddProduit)
+  add({getState, patchState}: StateContext<PanierStateModel>, { payload }: AddProduit) {
+    const state = getState();
+    patchState({ items: [...state.items, payload] });
+  }
+
+@Action(RemoveProduit)
+remove({getState, patchState}: StateContext<PanierStateModel>, { payload }: RemoveProduit) {
+  const updatedItems = getState().items.filter((_, index) => index !== payload.index);
+  patchState({ items: updatedItems });
+}
+}
+___
+tetiere\tetiere.component.html:
+<div>
+  Nombre d'articles dans le panier : {{ nbItems$ | async }}
+</div>
+___
+tetiere\tetiere.component.ts:
+import { Component, OnInit } from '@angular/core';
+import { Select, Store } from '@ngxs/store';
+import { Observable } from 'rxjs';
+import { PanierState } from '../store/panier.state';
+
+@Component({
+  selector: 'app-tetiere',
+  templateUrl: './tetiere.component.html',
+  styleUrls: ['./tetiere.component.css']
+})
+export class TetiereComponent implements OnInit {
+  @Select(PanierState.getNbItems) nbItems$!: Observable<number>;
+
+  constructor(private store: Store) {}
+
+  ngOnInit() {}
+}
+
+___

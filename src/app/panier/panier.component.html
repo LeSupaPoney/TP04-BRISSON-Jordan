@@ -3,3 +3,5 @@
   <button (click)="removeOneItem(item.produit.ref)">Supprimer une quantité</button>
   <button (click)="removeAllItems(item.produit.ref)">Supprimer tous</button>
 </div>
+
+<p>Total : {{ total$ | async }} €</p>
